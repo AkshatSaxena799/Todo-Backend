@@ -61,11 +61,22 @@ class TodoListView(Resource):
             return {"message": "something went wrong"}, 500
 
     def patch(self,todo_id):
-        """
-        TODO : Implement PATCH method
-        :return:
-        """
-        return {"message": "PATCH method not implemented"}, 501
+        try:
+            data = request.get_json(force=True)
+            data["id"] = todo_id
+            serializer = TodoListSerializer(data, model_type="dict")
+            if serializer.is_valid():
+                parsed_data = serializer.data()
+                Todo.update(parsed_data['id'], parsed_data['title'], parsed_data['completed'])
+                return {"message": "successfully updated task"}, 200
+        except KeyError:
+            return {"message": "missing required keys"}, 400
+        except ValueError as e:
+            logger.error(f"Error: {e}")
+            return {"message": "Todo with the request id not found"}, 400
+        except Exception as e:
+            logger.error(f"Error: {e}")
+            return {"message": "something went wrong"}, 500
 
     def delete(self, todo_id):
         try:
